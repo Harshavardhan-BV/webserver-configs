@@ -150,6 +150,7 @@ sudo ufw enable # enable the firewall
 ---
 ## Meme
 <img src="meme.png" alt="meme" width="200"/>
+
 ---
 ## To-do
 - Finish writing README
