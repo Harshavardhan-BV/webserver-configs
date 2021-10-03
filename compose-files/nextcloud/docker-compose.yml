@@ -1,0 +1,58 @@
+version: "2.1"
+
+services:
+  mariadb: #mysql-like database
+    image: ghcr.io/linuxserver/mariadb #base image
+    container_name: nc_db #name of container
+    hostname: nc_db #name of virtual pc on network
+    networks: #custom networks
+      - db
+    env_file: #sensitive environment variables in file 
+      - .env
+    environment: #environment variables
+      - PUID=1001 #run the program as this user
+      - PGID=1001 #group permissions for the program
+      - TZ=Asia/Kolkata #timezone
+    volumes: #persistent storage [source_on_host:destination_in_container]
+      - ./mariadb-config:/config #configration files
+    restart: unless-stopped #automatically restart 
+
+  redis: #distributed cache to speed-up database
+    image: redis:alpine #base image
+    container_name: nc_redis #name of container
+    hostname: nc_redis #name of virtual pc on network
+    user: 1001:1001 #run everything in container as user
+    networks: #custom networks
+      - db
+    volumes: #persistent storage [source_on_host:destination_in_container]
+      - ./redis-data:/data #data files
+    restart: unless-stopped #automatically restart 
+
+  nextcloud:
+    image: ghcr.io/linuxserver/nextcloud #base image
+    container_name: nextcloud #name of container
+    hostname: nextcloud #name of virtual pc on network
+    networks: #custom networks
+      - webserver
+      - db
+    env_file: #sensitive environment variables in file 
+      - .env
+    environment: #environment variables
+      - PUID=1001 #run the program as this user
+      - PGID=1001 #group permissions for the program
+      - TZ=Asia/Kolkata #timezone
+      - MYSQL_HOST=nc_mariadb #hostname of database
+      - REDIS_HOST=nc_redis #hostname of redis cache
+    volumes: #persistent storage [source_on_host:destination_in_container]
+      - ./nextcloud-config:/config #configration files
+      - /home/bv/data/nextcloud:/data #data storage for nextcloud
+      - /home/bv/data/OS_ISO:/OS_ISO #attached for external storage in nextcloud
+    depends_on: #needs these containers to be running first
+      - mariadb
+      - redis
+    restart: unless-stopped #automatically restart 
+
+networks: #define custom networks
+  webserver:
+    external: true #use predefined network
+  db: #create additional network only for database access

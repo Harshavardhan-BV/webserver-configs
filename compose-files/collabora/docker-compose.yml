@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  code:
+    image: collabora/code #base image
+    container_name: collabora #name of container
+    hostname: collabora #name of virtual pc on network
+    networks: #custom networks
+      - webserver 
+    env_file: #sensitive environment variables in file 
+      - .env
+    environment: #environment variables
+      - "domain=nextcloud\\.beevee\\.ga" #only this (sub)domain can provide docs to collabora, "\\." mandatory for <dots>
+      - "dictionaries=en_GB en_US" #only english spellcheck added
+    volumes:
+       - ./fonts:/opt/collaboraoffice6.4/share/fonts/truetype/local:ro #additional (ms) fonts
+    restart: unless-stopped #automatically restart 
+
+networks: #define custom networks
+  webserver:
+    external: true #use predefined network

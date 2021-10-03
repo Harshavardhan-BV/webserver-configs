@@ -1,0 +1,27 @@
+version: "2.1"
+
+services:
+  wireguard:
+    image: ghcr.io/linuxserver/wireguard #base image
+    container_name: wireguard #name of container
+    hostname: wireguard #name of virtual pc on network
+    cap_add:
+      - NET_ADMIN #iptables modified for routing
+      - SYS_MODULE #to load wireguard kernel module
+    env_file: #sensitive environment variables in file 
+      - .env #contains list of peers
+    environment: #environment variables
+      - PUID=1001 #run the program as this user
+      - PGID=1001 #group permissions for the program
+      - TZ=Asia/Kolkata #timezone
+      - SERVERURL=beevee.ga #domain/ip to connect to
+      - SERVERPORT=51820 #listen port
+      - PEERDNS=auto #use dns of host
+      - INTERNAL_SUBNET=10.13.13.0 #ip subnet of connected devices
+      - ALLOWEDIPS=0.0.0.0/0 #allow connections to anywhere via vpn (no split-tunneling)
+    volumes: #persistent storage [source_on_host:destination_in_container]
+      - ./wireguard-config:/config #configuration files
+      - /lib/modules:/lib/modules #wireguard kernel modules
+    ports: #expose ports
+      - 51820:51820/udp #same as SERVERPORT
+    restart: unless-stopped #automatically restart 

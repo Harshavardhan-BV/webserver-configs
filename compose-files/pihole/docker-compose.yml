@@ -1,0 +1,22 @@
+version: "3"
+
+services:
+  pihole:
+    image: pihole/pihole:latest #base image
+    container_name: pihole #name of container
+    hostname: pihole #name of virtual pc on network
+    networks: #custom networks
+      - webserver
+    environment: #environment variables
+      TZ: 'Asia/Kolkata' #timezone
+    volumes:
+      - './etc-pihole/:/etc/pihole/' #pihole configuration
+      - './etc-dnsmasq.d/:/etc/dnsmasq.d/' #dnsmasq configuration
+    ports: #expose ports
+      - "53:53/tcp" #for dns
+      - "53:53/udp" #for dns
+    restart: unless-stopped #automatically restart 
+    
+networks: #define custom networks
+  webserver:
+    external: true #use predefined network

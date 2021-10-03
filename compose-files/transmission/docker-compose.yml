@@ -1,0 +1,29 @@
+version: "2.1"
+
+services:
+  transmission:
+    image: ghcr.io/linuxserver/transmission #base image
+    container_name: transmission #name of container
+    hostname: transmission #name of virtual pc on network
+    networks: #custom networks
+      - webserver
+    env_file: #sensitive environment variables in file 
+      - .env
+    environment: #environment variables
+      - PUID=1001 #run the program as this user
+      - PGID=1001 #group permissions for the program
+      - TZ=Asia/Kolkata #timezone
+      - TRANSMISSION_WEB_HOME=/flood-for-transmission/ #using the flood ui, combustion is better for mobile centric
+    volumes: #persistent storage [source_on_host:destination_in_container]
+      - ./transmission-config:/config #configration files
+      - /home/bv/Downloads:/downloads #default location to download to
+      - /home/bv/media:/media #media folder to dowload to
+      - /home/bv/torrent-watch:/watch #watch directory for torrent files to autodownload
+    ports: #expose ports 
+      - 51413:51413 #peer listen port
+      - 51413:51413/udp #peer listen port
+    restart: unless-stopped #automatically restart 
+
+networks: #define custom networks
+  webserver:
+    external: true #use predefined network

@@ -134,6 +134,7 @@ sudo ufw enable # enable the firewall
 
 ---
 ## Services
+Writeup in progress do not use the compose files without instructions yet
 ### Exposed
 #### SWAG
 #### Nextcloud
@@ -153,6 +154,6 @@ sudo ufw enable # enable the firewall
 
 ---
 ## To-do
-- Finish writing README
-- Sanitise compose files of sensitive information
-- Upload docker-compose and config files
+- [ ] Finish writing README
+- [x] Sanitise compose files of sensitive information
+- [ ] Upload docker-compose and config files

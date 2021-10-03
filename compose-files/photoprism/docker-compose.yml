@@ -1,0 +1,69 @@
+version: '3.5'
+
+services:
+  photoprism:
+    image: photoprism/photoprism:latest #base image
+    container_name: photoprism #name of container
+    hostname: photoprism #name of virtual pc on network
+    security_opt: #disabling security features bcos problems :/
+      - seccomp:unconfined
+      - apparmor:unconfined #need to see if can be done without this
+    user: 1001:1001 #run everything in container as user
+    networks: #custom networks
+      - webserver
+      - db
+    env_file: #sensitive environment variables in file 
+      - .env
+    environment: #environment variables
+      PHOTOPRISM_ORIGINALS_LIMIT: 5000 #max file size (5GB currently, might need to change when coming to videos)
+      PHOTOPRISM_HTTP_COMPRESSION: "gzip" #http compression
+      PHOTOPRISM_DEBUG: "false" #debug mode with extra logs disabled
+      PHOTOPRISM_PUBLIC: "false" #enabled password protection
+      PHOTOPRISM_READONLY: "false" #originals can be modified +(import, upload, and delete)
+      PHOTOPRISM_EXPERIMENTAL: "true" #enabled experimental features, might run into bugs
+      PHOTOPRISM_DISABLE_WEBDAV: "false" #enabled webdav for photo importing (not tested)
+      PHOTOPRISM_DISABLE_SETTINGS: "false" #enabled settings panel
+      PHOTOPRISM_DISABLE_TENSORFLOW: "false" #enabled tensorflow for indexing/classification
+      PHOTOPRISM_DISABLE_FACES: "false" #enabled face recognition
+      PHOTOPRISM_DISABLE_CLASSIFICATION: "false" #enabled classifying images for search
+      PHOTOPRISM_DARKTABLE_PRESETS: "false" #Enables Darktable presets and disables concurrent RAW conversion??
+      PHOTOPRISM_DETECT_NSFW: "false" #disbled flagging offensive pics
+      PHOTOPRISM_UPLOAD_NSFW: "true" #allowed uploading offesive pics(will i?)
+      PHOTOPRISM_DATABASE_DRIVER: "mysql" #using mariadb(mysql-like) database
+      PHOTOPRISM_DATABASE_SERVER: "pp_db:3306" #db servername:port
+      PHOTOPRISM_SITE_URL: "https://photoprism.beevee.ga/" #(sub)domain url
+      PHOTOPRISM_SITE_TITLE: "PhotoPrism" #HTML <head> <title>
+      PHOTOPRISM_SITE_CAPTION: "Browse Your Life" #HTML <head> <title>
+      PHOTOPRISM_SITE_DESCRIPTION: "" #HTML <head> stuff (doesn't seem to do anything else)
+      PHOTOPRISM_SITE_AUTHOR: "BV" #HTML <head> stuff (doesn't seem to do anything else)
+      HOME: "/photoprism" #Home folder
+    working_dir: "/photoprism" #Home folder 
+    volumes: #persistent storage [source_on_host:destination_in_container]
+      - "/home/bv/Pictures:/photoprism/originals" #original picture storage
+      - "./photoprism-storage:/photoprism/storage" #(metadata) storage
+      - "./photoprism-data:/var/lib/photoprism" #data file? (creates a docker volume otherwise)
+      #- "/home/bv/bogosbinted:/photoprism/import" #mount point to transfer pre-existing library from
+    depends_on: #needs these containers to be running first
+      - mariadb
+    restart: unless-stopped #automatically restart 
+
+  mariadb:
+    image: ghcr.io/linuxserver/mariadb #base image
+    container_name: pp_db #name of container
+    hostname: pp_db #name of virtual pc on network
+    networks: #custom networks
+      - db
+    env_file: #sensitive environment variables in file 
+      - .env
+    environment: #environment variables
+      - PUID=1001 #run the program as this user
+      - PGID=1001 #group permissions for the program
+      - TZ=Asia/Kolkata #timezone
+    volumes: #persistent storage [source_on_host:destination_in_container]
+      - ./mariadb-config:/config #configration files
+    restart: unless-stopped #automatically restart 
+
+networks: #define custom networks
+  webserver:
+    external: true #use predefined network
+  db: #create additional network only for database access

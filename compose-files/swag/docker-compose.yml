@@ -1,0 +1,31 @@
+version: "2.1"
+
+services:
+  swag:
+    image: ghcr.io/linuxserver/swag #base image
+    container_name: swag #name of container
+    hostname: swag #name of virtual pc on network
+    cap_add: #additional linux permissions
+      - NET_ADMIN #for fail2ban ig?
+    networks: #custom networks
+      - webserver  
+    environment: #environment variables
+      - PUID=1001 #run the program as this user
+      - PGID=1001 #group permissions for the program
+      - TZ=Asia/Kolkata #timezone
+      - URL=beevee.ga #domain name
+      - SUBDOMAINS=www,nextcloud,jellyfin,bitwarden,test,photoprism,collabora #subdomains for certificate
+      - VALIDATION=http #certbot validation type
+      - EMAIL=bv_harshavardhan@live.com #email for certificate
+      - ONLY_SUBDOMAINS=false #include base domain as well
+    volumes: #persistent storage [source_on_host:destination_in_container]
+      - ./swag_config:/config #configration files
+      - /home/bv/website:/config/www #html website for www.beevee.ga
+    ports: #expose ports 
+      - 443:443 #https
+      - 80:80 #http for redirection and certbot
+    restart: unless-stopped #automatically restart 
+    
+networks: #define custom networks
+  webserver:  
+     external: true #use predefined network
