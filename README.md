@@ -17,13 +17,13 @@ Raspberry Pi 4 Model B 8GB RAM | ₹ 6,799.00 | New
 Raspberry Pi 15.3W Type-C Power Supply | ₹ 708.00 | New
 Samsung EVO Plus 64GB microSDXC | ₹699.00 | New
 40mm brass canister | ₹0.00 | Yes
-Seagate 2TB Backup Plus Slim | ₹5,099.00 | Yes
+WD My Book 4TB External Hard Drive | ₹6,999.00 | New
 
 [RaspberryPi](https://www.raspberrypi.org/) is a very small and cheap single-board computer that has pretty good performance for a low power device. I could've used some old laptop for this, but it would have loud fans, produce a lot of heat and would be difficult to hide. 
 
 This RPi is enough for me as I don't expect more than 10 instances to be connected at a single time. I've gone went with 8GB of RAM since I'm running quite a few heavy services. If you plan to use it for production work, a dedicated server or a cluster of Pi's with load balancing might be better, depending on your needs. Additionally, RPi uses ARM architecture so some applications may not be supported. The requirement of heatsinks or fans is dependent on the climate of your location and your workloads.
 
-The Seagate hard disk is currently only for testing purposes as a bulk storage device. It had stopped working previously and currently has bad sectors for almost 1TB. Only a 1TB space in the middle had no bad sectors and is used currently. It needs replacement as soon as possible.
+<TBD>
 
 ### Software
 #### [Ubuntu Server 20.04 LTS](https://ubuntu.com/download/raspberry-pi)
@@ -82,12 +82,12 @@ cd freenom-script && sudo make install
 # Add `freenom_email` and `freenom_passwd` with the email and password used while registering the domain and comment out MTA (email service not configured)
 sudo vim /usr/local/etc/freenom.conf
 # Enable auto-updating IP entry
-sudo systemctl enable --now freenom-update@beevee.ga.timer
+sudo systemctl enable --now freenom-update@<domain>.timer
 # [Optional] Enable auto-renew (not tested yet as renewal time hasn't come)
-sudo systemctl enable --now freenom-renew@beevee.ga.timer
+sudo systemctl enable --now freenom-renew@<domain>.timer
 ```
 
-I used the freenom client area (https://my.freenom.com/clientarea.php?managedns=domain&domainid=numbers) to add the following entries.
+I used the freenom client area (https://my.freenom.com/clientarea.php?managedns=domain&domainid=numbers) to add the following entries. Change them as per your domain
 
 Name | Type | TTL | Target
 ---|---|---|---
@@ -97,7 +97,9 @@ COLLABORA | CNAME | 3600 | beevee.ga
 JELLYFIN | CNAME | 3600 | beevee.ga
 NEXTCLOUD | CNAME | 3600 | beevee.ga
 PHOTOPRISM | CNAME | 3600 | beevee.ga
+PIHOLE | CNAME | 3600 | beevee.ga
 TEST | CNAME | 3600 | beevee.ga
+TRANSMISSION | CNAME | 3600 | beevee.ga
 WWW | CNAME | 3600 | beevee.ga
 
 What the columns mean in simple terms are as follows. [Detailed version here](https://www.cloudflare.com/learning/dns/dns-records/). 
@@ -134,11 +136,7 @@ To | Action | From | Comments(not part of ufw)
 443/tcp | ALLOW | Anywhere | for HTTPS (SWAG)
 51413 | ALLOW | Anywhere | for Transmission
 51820/udp | ALLOW | Anywhere | for Wireguard
-22/tcp (v6) | LIMIT | Anywhere (v6) | same as before, in IPv6
-80/tcp (v6) | ALLOW | Anywhere (v6) | "
-443/tcp (v6) | ALLOW | Anywhere (v6) | "
-51413 (v6) | ALLOW | Anywhere (v6) | "
-51820/udp (v6) | ALLOW | Anywhere (v6) | "
+port/proto (v6) | same as IPv4 | same as IPv4 | same as IPv4
 ```bash
 sudo ufw default deny # block all incoming by default
 sudo ufw limit 22/tcp # for rate limiting ssh
@@ -149,18 +147,21 @@ sudo ufw enable # enable the firewall
 
 ---
 ## Services
-If you're using my compose-files, I recommend starting the SWAG container first. If you don't want it, you can expose the ports by referring to the respective docs. **DO NOT EXPOSE THESE PORTS PUBLICLY**.
+If you're using my compose-files, I recommend starting the SWAG container first. If you don't want it, you can expose the ports by referring to the respective docs. **DO NOT EXPOSE THESE PORTS PUBLICLY**. The compose-files contain additional comments, so check them before following the instruction below. While the comments can stay in *.yml files, you'll need to remove the comments in the .env files.
 
 ### Exposed
 #### [SWAG](https://github.com/linuxserver/docker-swag)
-SWAG (Secure Web Access Gateway) is an image containing Nginx + Certbot. Nginx can be used as a webserver as well as a reverse proxy. Certbot provides SSL (HTTPS) certificates that are validated by letsencrypt and performs it's renewal automatically. One must never expose ports directly for web-services and a reverse proxy with HTTPS is necessary for such cases. Look for some other docker image if you plan to use your own external CA authorized or self signed (you monster) certificates.
+SWAG (Secure Web Access Gateway) is an image containing Nginx + Certbot. Nginx can be used as a webserver as well as a reverse proxy. Certbot provides SSL (HTTPS) certificates that are validated by Let's Encrypt (or ZeroSSL) and performs it's renewal automatically. This image also has a built-in fail2ban to IP ban based on set rules. One must never expose ports directly for web-services and a reverse proxy with HTTPS is necessary for such cases. Look for some other docker image if you plan to use your own external CA authorized or self signed (you monster) certificates.
 
 **Instructions:**
+- Change the email, url and subdomains (comma seperated) in the [.env](./compose-files/swag/.env) file 
 - Start the container with `sudo docker-compose up -d`
-- Add the reverse proxy configurations. You can rename the app.subdomain.conf.sample to app.subdomain.conf to activate them. I've added additional modifications/headers which I've uploaded. You'll need the additional local.conf and x-secure.conf if so
-- [x-secure.conf](./swag_configs/nginx/x-secure.conf) contains HTTP headers that are meant to increase security and mitigate Cross-site scripting attacks. They are commented out in [ssl.conf](./swag_configs/nginx/ssl.conf) but since some web-apps implement their own headers, this was moved to a seperate file to enable on case basis
-- [local.conf](./swag_configs/nginx/local.conf) contains configurations to limit only to LAN
-- (Optional) I've enabled HSTS by removing the comment-out in [ssl.conf](./swag_configs/nginx/ssl.conf) and submited it for [preload](https://hstspreload.org/). This ensures that all connections to the domain and subdomains are strictly HTTPS by hard-coding it every major browser. But if for some reason you lose HTTPS, the browser will refuse to load the site
+- Add the reverse proxy configurations in ./swag_configs/nginx/proxy-confs/. You can rename the app.subdomain.conf.sample to app.subdomain.conf to activate them. I've added additional modifications/headers to the files I use to improve security and I've uploaded them. You'll need the additional [local.conf](./swag_configs/nginx/local.conf) and [x-secure.conf](./swag/swag_configs/nginx/x-secure.conf) if so
+- [x-secure.conf](./swag/swag_configs/nginx/x-secure.conf) contains HTTP headers that are meant to increase security and mitigate cross-site scripting attacks. They are commented out in [ssl.conf](./swag/swag_configs/nginx/ssl.conf) but since some web-apps implement their own headers, this was moved to a seperate file to enable on a case basis
+- [local.conf](./swag/swag_configs/nginx/local.conf) contains configurations to limit only to LAN
+- (Optional) I've enabled HSTS by removing the comment-out in [ssl.conf](./swag/swag_configs/nginx/ssl.conf) and submited it for [preload](https://hstspreload.org/) afterwards. This ensures that all connections to the domain and subdomains are strictly HTTPS by hard-coding it every major browser. But if for some reason you lose HTTPS, the browser will refuse to load the 
+- I've also enabled opt out of Google's FLoC by removing the comment-out in [ssl.conf](./swag/swag_configs/nginx/ssl.conf) for that as well
+- Restart the container with `sudo docker restart swag` for the changes to take effect
 
 **To-Do:** 
 - [ ] fail2ban for services
@@ -168,7 +169,7 @@ SWAG (Secure Web Access Gateway) is an image containing Nginx + Certbot. Nginx c
 - [x] Limit to local for certain subdomains
 - [ ] Reduce logs
 
-**Links:** [Docker Image Docs](https://docs.linuxserver.io/images/docker-swag), [1st-party Docs](https://docs.linuxserver.io/general/swag), [HTTP Header Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers), [Header Configuration Scanner](https://observatory.mozilla.org/)
+**Links:** [Docker Image Docs](https://docs.linuxserver.io/images/docker-swag), [1st-party Docs](https://docs.linuxserver.io/general/swag), [Nginx Docs](https://nginx.org/en/docs/), [HTTP Header Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers), [Header Configuration Scanner](https://observatory.mozilla.org/)
 
 #### [Nextcloud](https://www.nextcloud.com/)
 Nextcloud is a self hosted cloud drive similar to google drive/onedrive and provided functionalities like file storage, contacts, calendar, notes, etc. It allows uploading, downloading and sharing files on the nextcloud server as well as automatic folder backup, calendar and contact sync. 
@@ -176,17 +177,19 @@ Nextcloud is a self hosted cloud drive similar to google drive/onedrive and prov
 **Instructions:**
 TBD. Do not use compose yet.
 
-**Links:** [Docker Image Docs](https://docs.linuxserver.io/images/docker-nextcloud), [1st-party Docs](https://docs.nextcloud.com/server/latest/admin_manual/), [Client Download](https://nextcloud.com/install/#install-clients)
+**Nextcloud Links:** [Docker Image Docs](https://docs.linuxserver.io/images/docker-nextcloud), [1st-party Docs](https://docs.nextcloud.com/server/latest/admin_manual/), [Client Download](https://nextcloud.com/install/#install-clients)
+
+**Mariadb Links:** [Docker Image Docs](https://docs.linuxserver.io/images/docker-mariadb), [1st-party Docs](https://mariadb.org/documentation/), [SQL Statements](https://mariadb.com/kb/en/sql-statements/), [Nextcloud DB-config Docs](https://docs.nextcloud.com/server/latest/admin_manual/configuration_database/linux_database_configuration.html), [Nextcloud 4-byte support](https://docs.nextcloud.com/server/latest/admin_manual/configuration_database/mysql_4byte_support.html)
 
 #### [Collabora](https://collaboraoffice.com/code)
 Collabora is a web-based office suite similar to Google Docs/Office Online. I'm using this as a seperate container because the nextcloud image I'm using doesn't support the one from app store. 
 
 **Instructions:**
+- Set the admin username and password in the [.env](./compose-files/collabora/.env) file  
 - Start the container with `sudo docker-compose up -d`
-- Verify if the container is running by checking if you get 'OK' in https://collabora.domain/
+- Verify if collabora started by checking if you get 'OK' in https://collabora.domain/
 - Connect to it with nextcloud. **This cannot be used standalone** (I was so confused by this)
-- Currently, the only way to use additional fonts (*cough* microsoft fonts *cough*) without building your own image is to mount as given in the compose file. This will break 
-whenever the version number changes, but none of the other methods I've tried worked.
+- Currently, the only way to use additional fonts (*cough* microsoft fonts *cough*) without building your own image is to mount as given in the compose file. This will break whenever the version number changes, but none of the other methods I've tried worked.
 
 **To-Do:** 
 - [ ] Merge with nextcloud stack
@@ -210,29 +213,57 @@ Jellyfin is a self hosted media server similar to plex (also selfhosted but not 
 Bitwarden is an open source password manager alternative to LastPass/Dashlane that offers self-hosting as well. Vaultwarden is a rewrite of the Bitwarden server API in Rust and is prefered by non-enterprise self-hosters due to its lower resource demand. 
 
 **Instructions:**
-- SIGNUPS_ALLOWED=true should be set on initial setup to create account.
-- Alternatively, users can be invited via admin panel, which can be enabled by setting a password in [.env](./compose-files/vaultwarden/.env) file and removing the comment for env_file in compose file.
+- Set the admin password (recommended: `openssl rand -base64 48`) in the [.env](./compose-files/vaultwarden/.env) file 
 - Start the container with `sudo docker-compose up -d`
-- Create a user in https://bitwarden.domain/#/register. If you followed the alternate instruction go to https://bitwarden.domain/admin and invite before this
-- Reset SIGNUPS_ALLOWED=false or comment out env_file for better security
+- Go to https://bitwarden.domain/admin > users and invite your user by entering an email address. You will not get an email (unless you've set up a SMTP server) but an account can be created regardless
+- Alternatively, you can temporarily set SIGNUPS_ALLOWED=true in the [docker-compose.yml](./compose-files/vaultwarden/docker-compose.yml) file and skip the above step
+- Go to https://bitwarden.domain/#/register and create an user with the same email address
+- You can use the web-vault and apps with this user
 
 **Links:** [Docker Image Docs](https://github.com/dani-garcia/vaultwarden/wiki/), [Bitwarden Docs](https://bitwarden.com/help/), [Client Download](https://bitwarden.com/download/)
 
 #### [Photoprism](https://photoprism.app/)
 Photoprism is a self-hosted photo storage alternative to Google Photos. It has a tensorflow model to scan and index, as well as facial recognition. This allows it to have the search functionality similar to that of Google Photos. It's under heavy development among all the services I'm running. 
 
-**Additional Instructions:**
-TBD. Do not use compose yet
+**Instructions:**
+- Set the password for database root, database user and photoprism login in the [.env](./compose-files/photoprism/.env) file 
+- Start the container with `sudo docker-compose up -d`
+- The default configuration of the mariadb image is different from that recommended for photoprism. **Please change the configurations to avoid DATA LOSS**. Do this before connecting the database. For additional safety, stop photoprism with `sudo docker stop photoprim`
+- Change the character-set-server, collation-server, transaction-isolation, max_connections, innodb_rollback_on_timeout, innodb-lock-wait-timeout as shown in the uploaded [custom.cnf](./photoprism/mariadb-config/custom.cnf) and restart the database with `sudo docker restart pp_db`
+- The database would be created before we made the change and has to be changed with: 
+```mysql
+# Open mysql shell by entering root password for 
+sudo docker exec -it mysqld -p
+# Enter these in mysql shell (MariaDB [(none)]>)
+ALTER DATABASE photoprism CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+- In the same mysql shell, verify the changes
+```mysql
+# Query for changed parameters
+# Should return | READ-COMMITTED | 512 | 0 | 120 |
+SELECT @@global.TX_ISOLATION, @@max_connections, @@innodb_rollback_on_timeout, @@innodb_lock_wait_timeout;
+# Change to database
+USE photoprism;
+# Character set and collation 
+# Should return | utf8mb4 | utf8mb4_unicode_ci |
+SELECT @@character_set_database, @@collation_database;
+# Close shell
+exit
+```
+- Go to https://photoprism.domain, login and upload photos
+- Indexing can be done at https://photoprism.domain/library, 
 
-**Links:** [1st-party Docs](https://docs.photoprism.org/)
+
+**Photoprism Links:** [1st-party Docs](https://docs.photoprism.org/)
+**Mariadb Links:** [Docker Image Docs](https://docs.linuxserver.io/images/docker-mariadb), [1st-party Docs](https://mariadb.org/documentation/), [SQL Statements](https://mariadb.com/kb/en/sql-statements/)
 
 #### [Wireguard](https://www.wireguard.com/)
 Wireguard is a VPN protocol that is relatively new. It aims to be fast and simple while providing enough security. I found this to be much easier to configure than (my failed bare-metal attempt at) OpenVPN. Using a VPN one can access the LAN only services and devices on the network from anywhere securely as well as to overcome censorship firewalls and resist eavesdropping in public Wi-Fi. 
 
 **Instructions:**
-- Client configuration can be generated by adding (space-seperated) names to [.env](./compose-files/wireguard/.env) file 
+- Change the domain name and add  names to peers (space-seperated) in the [.env](./compose-files/wireguard/.env) file 
 - Start the container with `sudo docker-compose up -d`
-- The generated client configs are located at wireguard-config/peer_name
+- The generated client configurations are located at wireguard-config/peer_name
 - The .conf file can be imported to client or the .png can be scanned if on a mobile client and connected
 
 **To-Do:** 
@@ -246,13 +277,13 @@ PiHole is a DNS based network-wide ad-blocker. It can be used to block ads and t
 
 **Instructions:**
 - Start the container with `sudo docker-compose up -d`
-- The password is created by the image when it is first started (either as a random string or from set environment variable). `sudo docker exec -it pihole pihole -a -p` can be used to set a new password later on.
-- Add the IP of RPi as the DNS server on the router. You'll to use DHCP (requires other configurations) otherwise.
-- **PROBLEM**: You can't access pihole web-ui without local dns entry in pihole. You'll need to expose the web-ui port or add a global dns entry :/
-- I've added the same [DNS records](#dns-configuration) appended with domain in the local dns records, https://pihole.beevee.ga/admin/dns_records.php and https://pihole.domain/admin/cname_records.php for A and CNAME records respectively. This allows the use of domain URLs internally even without internet.Additionally, I've added additional CNAME records for the internal services. 
-- Adlists can be added in https://pihole.domain/admin/groups-adlists.php. Currently I'm using the [default](https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts) and [Developer Dan's Ads & Tracking](https://www.github.developerdan.com/hosts/lists/ads-and-tracking-extended.txt)
+- The password is created by the image when it is first started (either as a random string or from set environment variable). `sudo docker exec -it pihole pihole -a -p` can be used to set a new password later
+- Add the IP of RPi as the DNS server on the router. You'll have to use DHCP (requires other configurations) otherwise.
+- If you cannot access the web-ui at https://pihole.domain/admin or don't want to expose with global subdomain record, you can expose the web-ui port locally instead by removing the comment-out
+- I've added the same [DNS records](#dns-configuration) appended with the domain in the local dns records, https://pihole.domain/admin/dns_records.php and https://pihole.domain/admin/cname_records.php for A and CNAME records respectively. This allows the use of domain URLs internally even without internet
+- Adlists can be added in https://pihole.domain/admin/groups-adlists.php. Currently I'm using the [default](https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts) and [Developer Dan's Ads & Tracking](https://www.github.developerdan.com/hosts/lists/ads-and-tracking-extended.txt). After adding a list, gravity database have to be updated at https://pihole.domain/admin/gravity.php
 - Whitelist can be added to allow domains in adlists so that some functionality isn't broken in https://pihole.domain/admin/groups-domains.php?type=white. I've currently only added [GFonts](fonts.gstatic.com)
-- Upstream DNS provider can be set in https://pihole.domain/admin/settings.php?tab=dns. I'm currently using Cloudflare's DNS.
+- Upstream DNS provider can be set in https://pihole.domain/admin/settings.php?tab=dns. I'm currently using Cloudflare's DNS Server
 
 **To-Do:** 
 - [ ] Additional blocklists?
@@ -264,13 +295,14 @@ PiHole is a DNS based network-wide ad-blocker. It can be used to block ads and t
 Transmission is a BitTorrent client for torrenting (i.e downloading and sharing Linux ISOs). It has good web-ui remote (using flood currently) for adding and managing torrents and works in the same way as a desktop client. Combustion web-ui is better suited if using mobile primarily.
 
 **Instructions:**
+- Set username and password in the [.env](./compose-files/transmission/.env) file 
 - Start the container with `sudo docker-compose up -d`
-- Access the web-ui at https://transmission.domain/transmission/web/
+- Access the web-ui at https://transmission.domain/transmission/web/ 
 
 **To-Do:** 
-- [ ] Web-Auth problems. The webpage is cached sometimes and doesn't request for password leading to an unusable webpage. Cannot use password manager's autofill
+- [x] Web-Auth problems. ~~The webpage is cached sometimes and doesn't request for password leading to an unusable webpage. Cannot use password manager's autofill.~~ Due to invalid https certificate
 
-**Links:** [Docker Image Docs](https://docs.linuxserver.io/images/docker-transmission), [Arch Wiki Entry](https://wiki.archlinux.org/title/Transmission)
+**Links:** [Docker Image Docs](https://docs.linuxserver.io/images/docker-transmission), [Arch Wiki Entry](https://wiki.archlinux.org/title/Transmission), [Android Remote App](https://github.com/equeim/tremotesf-android)
 
 ---
 ## Meme
@@ -283,4 +315,4 @@ Transmission is a BitTorrent client for torrenting (i.e downloading and sharing 
 - [x] Upload docker-compose files
 - [ ] Upload config files
 - [ ] Auto-update script
-- [ ] Move data to new hard disk
+- [x] Move data to new hard disk

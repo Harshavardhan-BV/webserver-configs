@@ -14,7 +14,6 @@ services:
       - PUID=1001 #run the program as this user
       - PGID=1001 #group permissions for the program
       - TZ=Asia/Kolkata #timezone
-      - SERVERURL=beevee.ga #domain/ip to connect to
       - SERVERPORT=51820 #listen port
       - PEERDNS=auto #use dns of host
       - INTERNAL_SUBNET=10.13.13.0 #ip subnet of connected devices

@@ -8,15 +8,14 @@ services:
     cap_add: #additional linux permissions
       - NET_ADMIN #for fail2ban ig?
     networks: #custom networks
-      - webserver  
+      - webserver 
+    env_file:
+      - .env
     environment: #environment variables
       - PUID=1001 #run the program as this user
       - PGID=1001 #group permissions for the program
       - TZ=Asia/Kolkata #timezone
-      - URL=beevee.ga #domain name
-      - SUBDOMAINS=www,nextcloud,jellyfin,bitwarden,test,photoprism,collabora #subdomains for certificate
       - VALIDATION=http #certbot validation type
-      - EMAIL=bv_harshavardhan@live.com #email for certificate
       - ONLY_SUBDOMAINS=false #include base domain as well
     volumes: #persistent storage [source_on_host:destination_in_container]
       - ./swag_config:/config #configration files

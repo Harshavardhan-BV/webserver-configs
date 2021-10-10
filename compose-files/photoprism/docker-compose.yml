@@ -31,6 +31,8 @@ services:
       PHOTOPRISM_UPLOAD_NSFW: "true" #allowed uploading offesive pics(will i?)
       PHOTOPRISM_DATABASE_DRIVER: "mysql" #using mariadb(mysql-like) database
       PHOTOPRISM_DATABASE_SERVER: "pp_db:3306" #db servername:port
+      PHOTOPRISM_DATABASE_USER: "pp" #mysqldb user
+      PHOTOPRISM_DATABASE_NAME: "photoprism" #mysql database
       PHOTOPRISM_SITE_URL: "https://photoprism.beevee.ga/" #(sub)domain url
       PHOTOPRISM_SITE_TITLE: "PhotoPrism" #HTML <head> <title>
       PHOTOPRISM_SITE_CAPTION: "Browse Your Life" #HTML <head> <title>
@@ -59,6 +61,8 @@ services:
       - PUID=1001 #run the program as this user
       - PGID=1001 #group permissions for the program
       - TZ=Asia/Kolkata #timezone
+      - MYSQL_USER=pp #create new mysql user to handle db
+      - MYSQL_DATABASE=photoprism #create new user to handle db
     volumes: #persistent storage [source_on_host:destination_in_container]
       - ./mariadb-config:/config #configration files
     restart: unless-stopped #automatically restart 
