@@ -5,7 +5,7 @@ This repository is to serve as a documentation/tutorial/blog of how I set up a s
 ## DISCLAIMER: 
 - A basic understanding of Linux is assumed by this README. Don't just copy-paste the commands, read and understand them first. For example: You'll need to change the domain name.
 - This is my learning experience and I may have made some mistakes, so feel free to open an issue on Github or contact me if you find any. 
-- I'm not responsible for any loss that may happen from following my guide. Please refer to other guides and documentation (preferably 1st party) as well to be sure. 
+- I'm not responsible for any loss that may happen from following my guide. Please refer to other guides and documentation (Even 1st party docs to be extra cautious) as well to be sure. 
 - I've given away information for educational purposes only. Please don't run any attacks on my server using this information. Thanks.
 ---
 
@@ -64,7 +64,6 @@ sudo docker logs <container_name>
 # Execute a commmand inside a container, Use bash if you want a shell 
 sudo docker exec -it <container_name> <command/bash>
 ```
-The compose-files I've provided use configurations and data volumes relative to the compose file. **Make sure to create the passed folders or files** with `mkdir <folder_name>` or `touch <file_name>` as the user you'll be running the container as (Ref: UID/ user in compose-file) to avoid permission errors which would result in container boot-loops.
 
 ---
 ## Domain
@@ -147,16 +146,21 @@ sudo ufw enable # enable the firewall
 
 ---
 ## Services
-If you're using my compose-files, I recommend starting the SWAG container first. If you don't want it, you can expose the ports by referring to the respective docs. **DO NOT EXPOSE THESE PORTS PUBLICLY**. The compose-files contain additional comments, so check them before following the instruction below. While the comments can stay in *.yml files, you'll need to remove the comments in the .env files.
+If you're using my compose-files, I recommend starting the SWAG container first. If you don't want it, you can expose the ports by referring to the respective docs. DO NOT EXPOSE THESE PORTS PUBLICLY. Before using them take note of the follwing:
+- The compose-files contain additional comments, so check them before following the instruction below
+- You don't have to remove the comments in the docker-compose.yml files, but you'll need to remove the comments in the .env files currently
+- The UID and GID used by these are 1001, you can find those for your user by `id`
+- While most of the configuration and data volumes are relative to the compose file, some data volumes use long paths involving home directory which needs to be changed (`~/path` is not accepted by docker)
+- Make sure to create the passed folders or files before starting the containers with `mkdir <folder_name>` or `touch <file_name>` as the user to avoid permission errors which would result in container boot-loops
 
 ### Exposed
 #### [SWAG](https://github.com/linuxserver/docker-swag)
-SWAG (Secure Web Access Gateway) is an image containing Nginx + Certbot. Nginx can be used as a webserver as well as a reverse proxy. Certbot provides SSL (HTTPS) certificates that are validated by Let's Encrypt (or ZeroSSL) and performs it's renewal automatically. This image also has a built-in fail2ban to IP ban based on set rules. One must never expose ports directly for web-services and a reverse proxy with HTTPS is necessary for such cases. Look for some other docker image if you plan to use your own external CA authorized or self signed (you monster) certificates.
+SWAG (Secure Web Access Gateway) is an image containing Nginx + Certbot + fail2ban. Nginx can be used as a webserver as well as a reverse proxy. Certbot provides SSL (HTTPS) certificates that are validated by Let's Encrypt (or ZeroSSL) and performs it's renewal automatically. One must never expose ports publicly for web-services and a reverse proxy with HTTPS is necessary for such cases. Look for some other docker image (like standalone Nginx) if you plan to use your own external CA authorized or self signed (you monster) certificates.
 
 **Instructions:**
 - Change the email, url and subdomains (comma seperated) in the [.env](./compose-files/swag/.env) file 
 - Start the container with `sudo docker-compose up -d`
-- Add the reverse proxy configurations in ./swag_configs/nginx/proxy-confs/. You can rename the app.subdomain.conf.sample to app.subdomain.conf to activate them. I've added additional modifications/headers to the files I use to improve security and I've uploaded them. You'll need the additional [local.conf](./swag_configs/nginx/local.conf) and [x-secure.conf](./swag/swag_configs/nginx/x-secure.conf) if so
+- Add the reverse proxy configurations in [proxy-confs](./swag/swag_configs/nginx/proxy-confs/). You can rename the app.subdomain.conf.sample to app.subdomain.conf to activate them. I've added additional modifications/headers to the files I use to improve security and I've uploaded them. You'll need the additional [local.conf](./swag/swag_configs/nginx/local.conf) and [x-secure.conf](./swag/swag_configs/nginx/x-secure.conf) if so
 - [x-secure.conf](./swag/swag_configs/nginx/x-secure.conf) contains HTTP headers that are meant to increase security and mitigate cross-site scripting attacks. They are commented out in [ssl.conf](./swag/swag_configs/nginx/ssl.conf) but since some web-apps implement their own headers, this was moved to a seperate file to enable on a case basis
 - [local.conf](./swag/swag_configs/nginx/local.conf) contains configurations to limit only to LAN
 - (Optional) I've enabled HSTS by removing the comment-out in [ssl.conf](./swag/swag_configs/nginx/ssl.conf) and submited it for [preload](https://hstspreload.org/) afterwards. This ensures that all connections to the domain and subdomains are strictly HTTPS by hard-coding it every major browser. But if for some reason you lose HTTPS, the browser will refuse to load the 
@@ -172,23 +176,65 @@ SWAG (Secure Web Access Gateway) is an image containing Nginx + Certbot. Nginx c
 **Links:** [Docker Image Docs](https://docs.linuxserver.io/images/docker-swag), [1st-party Docs](https://docs.linuxserver.io/general/swag), [Nginx Docs](https://nginx.org/en/docs/), [HTTP Header Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers), [Header Configuration Scanner](https://observatory.mozilla.org/)
 
 #### [Nextcloud](https://www.nextcloud.com/)
-Nextcloud is a self hosted cloud drive similar to google drive/onedrive and provided functionalities like file storage, contacts, calendar, notes, etc. It allows uploading, downloading and sharing files on the nextcloud server as well as automatic folder backup, calendar and contact sync. 
+Nextcloud is a self-hosted cloud drive similar to google drive/onedrive and provided functionalities like file storage, contacts, calendar, notes, etc. It allows uploading, downloading and sharing files on the nextcloud server as well as automatic folder backup, calendar and contact sync. 
 
 **Instructions:**
-TBD. Do not use compose yet.
+- Set the password for database root, database user in the [.env](./compose-files/nextcloud/.env) file 
+- Start the container with `sudo docker-compose up -d`
+- The default configuration of the mariadb image is different from that recommended for nextcloud. Please change the configurations to avoid DATA LOSS. Do this before connecting the database. For additional safety, stop nextcloud with `sudo docker stop nextcloud`
+- Change the transaction-isolation and binlog_format as shown in the uploaded [custom.cnf](./nextcloud/mariadb-config/custom.cnf) `
+- [Optional] If you want emoji support, change character-set-server and collation-server as shown in the uploaded [custom.cnf](./nextcloud/mariadb-config/custom.cnf)
+- Restart the database with `sudo docker restart nc_db 
+- Verify the changes in a mysql shell and modify the database if required:
+```mysql
+# Open mysql shell by entering root password for 
+# You'll be dropped into the mysql shell (MariaDB [(none)]>)
+sudo docker exec -it nc_db mysql -p
+# Query for changed parameters
+# Should return | READ-COMMITTED | ROW | 
+SELECT @@tx_isolation, @@binlog_format;
+# [Optional] Change the database character set and collation
+ALTER DATABASE nextcloud CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+# [Optional] Change to database
+USE nextcloud;
+# [Optional] Query for changed character set and collation 
+# Should return | utf8mb4 | utf8mb4_general_ci |
+SELECT @@character_set_database, @@collation_database;
+# Close shell
+exit
+```
+- Start nextcloud with `sudo docker start nextcloud`
+- Perform the first time setup by going to https://nextcloud.domain and doing the following:
+    - Click Storage & database
+    - Switch database to MySQL/MariaDB 
+    - Enter the database credentials and change Database host to nc_db:3306
+    - Uncheck install recommended app, we shall do it manually as this gives problems
+    - Enter username and password for admin account
+- Some configurations cannot be changed with the web-ui and have to be done by adding entries for memcache.distributed, filelocking.enabled, memcache.locking, redis, overwritehost, overwriteprotocol , default_language, default_locale, default_phone_region in [config.php](./nextcloud/nextcloud-config/www/nextcloud/config/config.php). DO NOT replace with the file I've uploaded as other entries are redacted, it is ONLY FOR REFERENCE
+- Restart nextcloud with `sudo docker restart nextcloud` and login as your user
+- Verify that there are no problems at https://nextcloud.domain/settings/admin/overview and https://nextcloud.domain/settings/admin/logging (there may be some log entries)
+- Apps can be added at https://nextcloud.domain/settings/apps. I've added [Contacts](https://apps.nextcloud.com/apps/contacts), [Calendar](https://apps.nextcloud.com/apps/calendar), [Notes](https://apps.nextcloud.com/apps/notes), [Task](https://apps.nextcloud.com/apps/tasks), [Talk](https://apps.nextcloud.com/apps/spreed), [Mail](https://apps.nextcloud.com/apps/mail), [Forms](https://apps.nextcloud.com/apps/forms), [Collabora Online](https://apps.nextcloud.com/apps/richdocuments), [External storage support], [Two-Factor TOTP Provider](https://apps.nextcloud.com/apps/twofactor_totp)
+- Settings, including that of the installed apps can accessed at https://nextcloud.domain/settings/user
 
 **Nextcloud Links:** [Docker Image Docs](https://docs.linuxserver.io/images/docker-nextcloud), [1st-party Docs](https://docs.nextcloud.com/server/latest/admin_manual/), [Client Download](https://nextcloud.com/install/#install-clients)
 
 **Mariadb Links:** [Docker Image Docs](https://docs.linuxserver.io/images/docker-mariadb), [1st-party Docs](https://mariadb.org/documentation/), [SQL Statements](https://mariadb.com/kb/en/sql-statements/), [Nextcloud DB-config Docs](https://docs.nextcloud.com/server/latest/admin_manual/configuration_database/linux_database_configuration.html), [Nextcloud 4-byte support](https://docs.nextcloud.com/server/latest/admin_manual/configuration_database/mysql_4byte_support.html)
 
+**Redis Links:** [Docker Image Docs](https://hub.docker.com/_/redis/), [1st-party Docs](https://redis.io/documentation), [Nextcloud Caching Docs](https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/caching_configuration.html), [Nextcloud Caching Docs](https://docs.nextcloud.com/server/latest/admin_manual/configuration_files/files_locking_transactional.html)
+
 #### [Collabora](https://collaboraoffice.com/code)
-Collabora is a web-based office suite similar to Google Docs/Office Online. I'm using this as a seperate container because the nextcloud image I'm using doesn't support the one from app store. 
+Collabora is a self-hosted web-based office suite similar to Google Docs/Office Online. I'm using this as a seperate container because the nextcloud image I'm using doesn't support the one from app store. 
 
 **Instructions:**
 - Set the admin username and password in the [.env](./compose-files/collabora/.env) file  
 - Start the container with `sudo docker-compose up -d`
 - Verify if collabora started by checking if you get 'OK' in https://collabora.domain/
-- Connect to it with nextcloud. **This cannot be used standalone** (I was so confused by this)
+- Connect to it with nextcloud. This cannot be used STANDALONE (I was so confused by this)
+    - Go to https://nextcloud.domain/settings/admin/richdocuments
+    - Select use your own server
+    - In URL (and Port) of Collabora Online-server, put https://collabora.domain/ and save
+    - Make sure you get a green tick mark it
+    - Open any document in your nextcloud
 - Currently, the only way to use additional fonts (*cough* microsoft fonts *cough*) without building your own image is to mount as given in the compose file. This will break whenever the version number changes, but none of the other methods I've tried worked.
 
 **To-Do:** 
@@ -197,7 +243,7 @@ Collabora is a web-based office suite similar to Google Docs/Office Online. I'm 
 **Links:** [Docker Image Docs](https://sdk.collaboraonline.com/docs/installation/CODE_Docker_image.html), [Better 3rd-party Doc](https://project.dancier.net/documentation/howto/nextcloud/index.html), [Additional Fonts Forum post](https://help.nextcloud.com/t/collabora-font-issues/26126/4)
 
 #### [Jellyfin](https://jellyfin.org/) 
-Jellyfin is a self hosted media server similar to plex (also selfhosted but not fully open-source) and could be a replacement for streaming services like netflix/spotify for content that you *own*. Do note that the content that you pay for does not necessarily mean you *own* it due copyrights and terms, so use them with a media server at your own risk. Jellyfin also downloads metadata/images for your media and supports SyncPlay (watch together).
+Jellyfin is a self-hosted media server similar to plex (also selfhosted but not fully open-source) and could be a replacement for streaming services like netflix/spotify for content that you *own*. Do note that the content that you pay for does not necessarily mean you *own* it due copyrights and terms, so use them with a media server at your own risk. Jellyfin also downloads metadata/images for your media and supports SyncPlay (watch together).
 
 **Instructions:**
 - Start the container with `sudo docker-compose up -d`
@@ -228,20 +274,18 @@ Photoprism is a self-hosted photo storage alternative to Google Photos. It has a
 **Instructions:**
 - Set the password for database root, database user and photoprism login in the [.env](./compose-files/photoprism/.env) file 
 - Start the container with `sudo docker-compose up -d`
-- The default configuration of the mariadb image is different from that recommended for photoprism. **Please change the configurations to avoid DATA LOSS**. Do this before connecting the database. For additional safety, stop photoprism with `sudo docker stop photoprim`
+- The default configuration of the mariadb image is different from that recommended for photoprism. Please change the configurations to avoid DATA LOSS. Do this before connecting the database. For additional safety, stop photoprism with `sudo docker stop photoprim`
 - Change the character-set-server, collation-server, transaction-isolation, max_connections, innodb_rollback_on_timeout, innodb-lock-wait-timeout as shown in the uploaded [custom.cnf](./photoprism/mariadb-config/custom.cnf) and restart the database with `sudo docker restart pp_db`
-- The database would be created before we made the change and has to be changed with: 
+- The changed configurations can be verified and the created database can be altered as follows:
 ```mysql
 # Open mysql shell by entering root password for 
-sudo docker exec -it mysqld -p
-# Enter these in mysql shell (MariaDB [(none)]>)
-ALTER DATABASE photoprism CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-- In the same mysql shell, verify the changes
-```mysql
+# You'll be dropped into the mysql shell (MariaDB [(none)]>)
+sudo docker exec -it pp_db mysql -p
 # Query for changed parameters
 # Should return | READ-COMMITTED | 512 | 0 | 120 |
-SELECT @@global.TX_ISOLATION, @@max_connections, @@innodb_rollback_on_timeout, @@innodb_lock_wait_timeout;
+SELECT @@tx_isolation, @@max_connections, @@innodb_rollback_on_timeout, @@innodb_lock_wait_timeout;
+# Change the database character set and collation
+ALTER DATABASE photoprism CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 # Change to database
 USE photoprism;
 # Character set and collation 
@@ -250,11 +294,13 @@ SELECT @@character_set_database, @@collation_database;
 # Close shell
 exit
 ```
+- Start photoprism with `sudo docker start photoprism`
 - Go to https://photoprism.domain, login and upload photos
 - Indexing can be done at https://photoprism.domain/library, 
 
 
 **Photoprism Links:** [1st-party Docs](https://docs.photoprism.org/)
+
 **Mariadb Links:** [Docker Image Docs](https://docs.linuxserver.io/images/docker-mariadb), [1st-party Docs](https://mariadb.org/documentation/), [SQL Statements](https://mariadb.com/kb/en/sql-statements/)
 
 #### [Wireguard](https://www.wireguard.com/)

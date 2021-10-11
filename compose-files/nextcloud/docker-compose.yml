@@ -46,7 +46,7 @@ services:
     volumes: #persistent storage [source_on_host:destination_in_container]
       - ./nextcloud-config:/config #configration files
       - /home/bv/data/nextcloud:/data #data storage for nextcloud
-      - /home/bv/data/OS_ISO:/OS_ISO #attached for external storage in nextcloud
+      - /home/bv/OS_ISO:/OS_ISO #attached for external storage in nextcloud
     depends_on: #needs these containers to be running first
       - mariadb
       - redis
