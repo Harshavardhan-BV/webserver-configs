@@ -2,7 +2,7 @@ version: "2.1"
 
 services:
   wireguard:
-    image: ghcr.io/linuxserver/wireguard #base image
+    image: lscr.io/linuxserver/wireguard #base image
     container_name: wireguard #name of container
     hostname: wireguard #name of virtual pc on network
     cap_add:
@@ -23,4 +23,6 @@ services:
       - /lib/modules:/lib/modules #wireguard kernel modules
     ports: #expose ports
       - 51820:51820/udp #same as SERVERPORT
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1 #not sure if needed
     restart: unless-stopped #automatically restart 

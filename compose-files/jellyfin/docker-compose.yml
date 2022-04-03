@@ -2,11 +2,13 @@ version: "2.1"
 
 services:
   jellyfin:
-    image: ghcr.io/linuxserver/jellyfin #base image
+    image: lscr.io/linuxserver/jellyfin #base image
     container_name: jellyfin #name of container
     hostname: jellyfin #name of virtual pc on network
     networks: #custom networks
       - webserver
+    ports:
+      - 8096:8096 #webos has problems with le certificates, using ports instead of reverse proxy
     environment: #environment variables
       - PUID=1001 #run the program as this user
       - PGID=1001 #group permissions for the program
@@ -14,10 +16,6 @@ services:
     volumes: #persistent storage [source_on_host:destination_in_container]
       - ./jellyfin-config:/config #configration files
       - /home/bv/media:/media #media folder (not read-only since jellyfin writes metadata)
-      #- /opt/vc/lib:/opt/vc/lib #needs arm32 gpu libraries, non functional
-    devices: #attach devices in container
-        - /dev/vcsm-cma:/dev/vcsm #for hw-acc, non functional
-        - /dev/vchiq:/dev/vchiq #for hw-acc, non functional
     restart: unless-stopped #automatically restart 
 
 networks: #define custom networks

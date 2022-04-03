@@ -2,7 +2,7 @@ version: "2.1"
 
 services:
   transmission:
-    image: ghcr.io/linuxserver/transmission #base image
+    image: lscr.io/linuxserver/transmission #base image
     container_name: transmission #name of container
     hostname: transmission #name of virtual pc on network
     networks: #custom networks

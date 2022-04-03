@@ -1,0 +1,17 @@
+version: "3.5"
+
+services:
+  diun:
+    image: ghcr.io/crazy-max/diun #base image
+    container_name: diun  #name of container
+    hostname: diun #name of virtual pc on network
+    command: serve #command to send to the docker container
+    volumes: #persistent storage [source_on_host:destination_in_container]
+      - "./diun-data:/data"
+      - "./diun.yml:/diun.yml:ro" #configuration file
+      - "/var/run/docker.sock:/var/run/docker.sock" #docker socket to 
+    environment: #environment variables
+      - "TZ=Asia/Kolkata" #timezone
+      - "LOG_LEVEL=info" #default logging - provides information of things it does
+      - "LOG_JSON=false" #do not log as json file
+    restart: unless-stopped #automatically restart 

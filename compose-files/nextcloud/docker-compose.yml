@@ -2,7 +2,7 @@ version: "2.1"
 
 services:
   mariadb: #mysql-like database
-    image: ghcr.io/linuxserver/mariadb #base image
+    image: lscr.io/linuxserver/mariadb #base image
     container_name: nc_db #name of container
     hostname: nc_db #name of virtual pc on network
     networks: #custom networks
@@ -29,7 +29,7 @@ services:
     restart: unless-stopped #automatically restart 
 
   nextcloud:
-    image: ghcr.io/linuxserver/nextcloud #base image
+    image: lscr.io/linuxserver/nextcloud #base image
     container_name: nextcloud #name of container
     hostname: nextcloud #name of virtual pc on network
     networks: #custom networks
@@ -46,12 +46,27 @@ services:
     volumes: #persistent storage [source_on_host:destination_in_container]
       - ./nextcloud-config:/config #configration files
       - /home/bv/data/nextcloud:/data #data storage for nextcloud
-      - /home/bv/OS_ISO:/OS_ISO #attached for external storage in nextcloud
+      - /home/bv/bogosbinted:/Photos #attached for external storage for photoprism import
     depends_on: #needs these containers to be running first
       - mariadb
       - redis
     restart: unless-stopped #automatically restart 
-
+  
+  code: #office suite
+    image: collabora/code #base image
+    container_name: collabora #name of container
+    hostname: collabora #name of virtual pc on network
+    networks: #custom networks
+      - webserver 
+    env_file: #sensitive environment variables in file 
+      - .env
+    environment: #environment variables
+      - "domain=nextcloud\\.beevee\\.ga" #only this (sub)domain can provide docs to collabora, "\\." mandatory for <dots>
+      - "dictionaries=en_GB en_US" #only english spellcheck added
+    volumes:
+       - ./fonts:/opt/collaboraoffice/share/fonts/truetype/local #additional (ms) fonts
+    restart: unless-stopped #automatically restart 
+  
 networks: #define custom networks
   webserver:
     external: true #use predefined network

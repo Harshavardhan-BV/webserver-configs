@@ -15,7 +15,7 @@ services:
     ports: #expose ports
       - "53:53/tcp" #for dns
       - "53:53/udp" #for dns
-      #- "8053:80/tcp" #for webui 
+      #- "8053:80/tcp" #for webui
     restart: unless-stopped #automatically restart 
     
 networks: #define custom networks

@@ -11,9 +11,12 @@ services:
     env_file: #sensitive environment variables in file 
       - .env 
     environment: #environment variables
+      - "TZ=Asia/Kolkata" #timezone
       - "WEBSOCKET_ENABLED=true" #websockets for updating entries from non-mobile apps without sync
       - "SHOW_PASSWORD_HINT=false" #disable show password hint 
       - "SIGNUPS_ALLOWED=false" #disabled sign up after making my account (inviting from admin panel overides it)
+      - "LOG_FILE=/data/vaultwarden.log" #log file
+      - "LOG_LEVEL=warn" #reduce logs by logging only warnings/errors
     volumes: #persistent storage [source_on_host:destination_in_container]
       - "./vw-data:/data" #data storage
     restart: unless-stopped #automatically restart 

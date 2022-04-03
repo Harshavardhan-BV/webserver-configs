@@ -23,7 +23,7 @@ WD My Book 4TB External Hard Drive | ₹6,999.00 | New
 
 This RPi is enough for me as I don't expect more than 10 instances to be connected at a single time. I've gone went with 8GB of RAM since I'm running quite a few heavy services. If you plan to use it for production work, a dedicated server or a cluster of Pi's with load balancing might be better, depending on your needs. Additionally, RPi uses ARM architecture so some applications may not be supported. The requirement of heatsinks or fans is dependent on the climate of your location and your workloads.
 
-<TBD>
+The SD card serves as the OS boot drive and the hard disk serves as the bulk storage. The SD card is honestly not required and at such high capacity as newer RPi bootloaders support USB boot and SD cards are said to have lower endurance. The internal hard-disk used in My Book is WDC WD40EDAZ-11U78B0. This appears to be a enterprise class drive but is SMR. For my usecase, since I won't be doing much writes nor using ZFS raid, it shouldn't be an issue. 
 
 ### Software
 #### [Ubuntu Server 20.04 LTS](https://ubuntu.com/download/raspberry-pi)
@@ -97,7 +97,6 @@ JELLYFIN | CNAME | 3600 | beevee.ga
 NEXTCLOUD | CNAME | 3600 | beevee.ga
 PHOTOPRISM | CNAME | 3600 | beevee.ga
 PIHOLE | CNAME | 3600 | beevee.ga
-TEST | CNAME | 3600 | beevee.ga
 TRANSMISSION | CNAME | 3600 | beevee.ga
 WWW | CNAME | 3600 | beevee.ga
 
@@ -168,10 +167,10 @@ SWAG (Secure Web Access Gateway) is an image containing Nginx + Certbot + fail2b
 - Restart the container with `sudo docker restart swag` for the changes to take effect
 
 **To-Do:** 
-- [ ] fail2ban for services
+- [x] fail2ban for services
 - [ ] CSP header configuration
 - [x] Limit to local for certain subdomains
-- [ ] Reduce logs
+- [x] ~~Reduce logs~~ (botattack flooding logs taken care by f2b)
 
 **Links:** [Docker Image Docs](https://docs.linuxserver.io/images/docker-swag), [1st-party Docs](https://docs.linuxserver.io/general/swag), [Nginx Docs](https://nginx.org/en/docs/), [HTTP Header Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers), [Header Configuration Scanner](https://observatory.mozilla.org/)
 
@@ -360,5 +359,5 @@ Transmission is a BitTorrent client for torrenting (i.e downloading and sharing 
 - [x] Sanitise compose files of sensitive information
 - [x] Upload docker-compose files
 - [ ] Upload config files
-- [ ] Auto-update script
+- [x] ~~Auto-update script~~ using diun
 - [x] Move data to new hard disk

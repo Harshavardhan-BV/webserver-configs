@@ -5,9 +5,9 @@ services:
     image: photoprism/photoprism:latest #base image
     container_name: photoprism #name of container
     hostname: photoprism #name of virtual pc on network
-    security_opt: #disabling security features bcos problems :/
-      - seccomp:unconfined
-      - apparmor:unconfined #need to see if can be done without this
+    #security_opt: #disabling security?? works fine without 
+      #- seccomp:unconfined
+      #- apparmor:unconfined #need to see if can be done without this
     user: 1001:1001 #run everything in container as user
     networks: #custom networks
       - webserver
@@ -21,7 +21,7 @@ services:
       PHOTOPRISM_PUBLIC: "false" #enabled password protection
       PHOTOPRISM_READONLY: "false" #originals can be modified +(import, upload, and delete)
       PHOTOPRISM_EXPERIMENTAL: "true" #enabled experimental features, might run into bugs
-      PHOTOPRISM_DISABLE_WEBDAV: "false" #enabled webdav for photo importing (not tested)
+      PHOTOPRISM_DISABLE_WEBDAV: "false" #disabled webdav for photo importing (not tested)
       PHOTOPRISM_DISABLE_SETTINGS: "false" #enabled settings panel
       PHOTOPRISM_DISABLE_TENSORFLOW: "false" #enabled tensorflow for indexing/classification
       PHOTOPRISM_DISABLE_FACES: "false" #enabled face recognition
@@ -44,13 +44,13 @@ services:
       - "/home/bv/Pictures:/photoprism/originals" #original picture storage
       - "./photoprism-storage:/photoprism/storage" #(metadata) storage
       - "./photoprism-data:/var/lib/photoprism" #data file? (creates a docker volume otherwise)
-      #- "/home/bv/bogosbinted:/photoprism/import" #mount point to transfer pre-existing library from
+      - "/home/bv/bogosbinted:/photoprism/import" #mount point to transfer pre-existing library from
     depends_on: #needs these containers to be running first
       - mariadb
     restart: unless-stopped #automatically restart 
 
   mariadb:
-    image: ghcr.io/linuxserver/mariadb #base image
+    image: lscr.io/linuxserver/mariadb #base image
     container_name: pp_db #name of container
     hostname: pp_db #name of virtual pc on network
     networks: #custom networks
@@ -65,6 +65,11 @@ services:
       - MYSQL_DATABASE=photoprism #create new user to handle db
     volumes: #persistent storage [source_on_host:destination_in_container]
       - ./mariadb-config:/config #configration files
+    #healthcheck:
+      #test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      #timeout: 45s
+      #interval: 10s
+      #retries: 10
     restart: unless-stopped #automatically restart 
 
 networks: #define custom networks

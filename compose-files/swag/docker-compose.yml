@@ -2,7 +2,7 @@ version: "2.1"
 
 services:
   swag:
-    image: ghcr.io/linuxserver/swag #base image
+    image: lscr.io/linuxserver/swag #base image
     container_name: swag #name of container
     hostname: swag #name of virtual pc on network
     cap_add: #additional linux permissions
@@ -17,9 +17,13 @@ services:
       - TZ=Asia/Kolkata #timezone
       - VALIDATION=http #certbot validation type
       - ONLY_SUBDOMAINS=false #include base domain as well
+      - DOCKER_MODS=linuxserver/mods:swag-dashboard
     volumes: #persistent storage [source_on_host:destination_in_container]
       - ./swag_config:/config #configration files
       - /home/bv/website:/config/www #html website for www.beevee.ga
+      - ../jellyfin/jellyfin-config/log:/f2b_log/jellyfin:ro #logs from jellyfin for fail2ban
+      - ../vaultwarden/vw-data/vaultwarden.log:/f2b_log/vaultwarden/vaultwarden.log:ro #logs from vaultwarden for fail2ban
+      - /home/bv/data/nextcloud/nextcloud.log:/f2b_log/nextcloud/nextcloud.log:ro #logs from nextcloud for fail2ban
     ports: #expose ports 
       - 443:443 #https
       - 80:80 #http for redirection and certbot
