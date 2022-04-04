@@ -17,6 +17,7 @@ tmp_table_size		= 32M
 max_heap_table_size	= 32M
 transaction-isolation = READ-COMMITTED #changed to match default docker-compose
 binlog_format=mixed
+#innodb_force_recovery = 1
 #
 # * MyISAM
 #
@@ -93,7 +94,7 @@ max_binlog_size         = 100M
 default_storage_engine	= InnoDB
 # you can't just change log file size, requires special procedure
 #innodb_log_file_size	= 50M
-innodb_buffer_pool_size	= 256M
+innodb_buffer_pool_size	= 1G
 innodb_log_buffer_size	= 8M
 innodb_file_per_table	= 1
 innodb_open_files	= 400
