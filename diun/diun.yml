@@ -1,0 +1,21 @@
+
+watch:
+  workers: 8 #8 worker threads
+  schedule: "0 */6 * * *" #run every 6 hours
+  firstCheckNotif: true #send notification when 
+  compareDigest: true #compare sha digest b4 downloading manifest - to prevent hitting rate limits
+
+notif: #notification system
+  mail: #send email
+    host: <email-server> #SMTP email server
+    port: 587 #port - depends on encryption protocol
+    ssl: false #STARTLS used
+    username: <redacted> #username of email
+    password: <redacted> #password of email
+    from: noreply-diun@<domain> #sender's email
+    to: 
+      - <redacted> #receiver's email
+
+providers:
+  docker: #use docker socket to id images
+    watchByDefault: true #watch all running containers 

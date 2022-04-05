@@ -1,0 +1,5 @@
+[Definition]
+
+failregex=^.*Login failed: '?.*'? \(Remote IP: '?<ADDR>'?\).*$
+          ^.*\"remoteAddr\":\"<ADDR>\".*Trusted domain error.*$
+ignoreregex =

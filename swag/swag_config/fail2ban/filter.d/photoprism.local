@@ -1,0 +1,3 @@
+[Definition]
+
+failregex = ^<HOST> -.* "POST /api/v1/session HTTP*.*" 400 .* "https://photoprism.beevee.ga/login" .+$

@@ -1,0 +1,111 @@
+## Version 2022/01/09 - Changelog: https://github.com/linuxserver/docker-swag/commits/master/root/defaults/jail.local
+# This is the custom version of the jail.conf for fail2ban
+# Feel free to modify this and add additional filters
+# Then you can drop the new filter conf files into the fail2ban-filters
+# folder and restart the container
+
+[DEFAULT]
+# Prevents banning LAN subnets
+ignoreip = 127.0.0.1/8
+           192.168.0.0/24
+           172.16.0.0/12
+
+# Changes the default ban action from "iptables-multiport", which causes issues on some platforms, to "iptables-allports".
+banaction = iptables-allports
+
+# "bantime" is the number of seconds that a host is banned.
+bantime  = 1d
+
+# A host is banned if it has generated "maxretry" during the last "findtime"
+# seconds.
+findtime  = 12h
+
+# "maxretry" is the number of failures before a host get banned.
+maxretry = 5
+
+
+[ssh]
+enabled = false
+
+
+[nginx-http-auth]
+enabled  = true
+filter   = nginx-http-auth
+port     = http,https
+logpath  = /config/log/nginx/error.log
+#action  =  iptables-allports[name=nginx-http-auth]
+
+[nginx-badbots]
+enabled  = true
+port     = http,https
+filter   = nginx-badbots
+logpath  = /config/log/nginx/access.log
+maxretry = 2
+#action  =  iptables-allports[name=nginx-badbots]
+
+
+[nginx-botsearch]
+enabled  = true
+port     = http,https
+filter   = nginx-botsearch
+logpath  = /config/log/nginx/access.log
+maxretry = 2
+#action  =  iptables-allports[name=nginx-botsearch]
+
+[nginx-deny]
+enabled  = true
+port     = http,https
+filter   = nginx-deny
+logpath  = /config/log/nginx/error.log
+#action  =  iptables-allports[name=nginx-deny]
+
+[nginx-unauthorized]
+enabled  = true
+port     = http,https
+filter   = nginx-unauthorized
+logpath  = /config/log/nginx/unauthorized.log
+#action  = iptables-allports[name=nginx-unauthorized]
+
+[jellyfin]
+enabled = true
+port     = http,https
+filter = jellyfin
+logpath = /f2b_log/jellyfin/log*.log
+#action  =  iptables-allports[name=jellyfin]
+
+[vaultwarden]
+enabled = true
+port = http,https
+filter = vaultwarden
+logpath = /f2b_log/vaultwarden/vaultwarden.log
+#action  =  iptables-allports[name=vaultwarden]
+
+[vaultwarden-admin]
+enabled = true
+port = http,https
+filter = vaultwarden-admin
+logpath = /f2b_log/vaultwarden/vaultwarden.log
+#action  =  iptables-allports[name=vaultwarden-admin]
+
+[nextcloud]
+enabled = true
+port = http,https
+filter = nextcloud
+logpath = /f2b_log/nextcloud/nextcloud.log
+#action  =  iptables-allports[name=nextcloud]
+
+[photoprism]
+enabled = true
+port = http,https
+filter = photoprism
+logpath = /config/log/nginx/access.log
+#action = iptables-allports[name=photoprism]
+
+[gpon]
+enabled = true
+port = http,https
+filter = gpon
+logpath = /config/log/nginx/access.log
+maxretry=1
+bantime=7d
+#action = iptables-allports[name=gpon]

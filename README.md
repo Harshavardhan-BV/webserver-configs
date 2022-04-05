@@ -162,9 +162,12 @@ SWAG (Secure Web Access Gateway) is an image containing Nginx + Certbot + fail2b
 - Add the reverse proxy configurations in [proxy-confs](./swag/swag_configs/nginx/proxy-confs/). You can rename the app.subdomain.conf.sample to app.subdomain.conf to activate them. I've added additional modifications/headers to the files I use to improve security and I've uploaded them. You'll need the additional [local.conf](./swag/swag_configs/nginx/local.conf) and [x-secure.conf](./swag/swag_configs/nginx/x-secure.conf) if so
 - [x-secure.conf](./swag/swag_configs/nginx/x-secure.conf) contains HTTP headers that are meant to increase security and mitigate cross-site scripting attacks. They are commented out in [ssl.conf](./swag/swag_configs/nginx/ssl.conf) but since some web-apps implement their own headers, this was moved to a seperate file to enable on a case basis
 - [local.conf](./swag/swag_configs/nginx/local.conf) contains configurations to limit only to LAN
-- (Optional) I've enabled HSTS by removing the comment-out in [ssl.conf](./swag/swag_configs/nginx/ssl.conf) and submited it for [preload](https://hstspreload.org/) afterwards. This ensures that all connections to the domain and subdomains are strictly HTTPS by hard-coding it every major browser. But if for some reason you lose HTTPS, the browser will refuse to load the 
-- I've also enabled opt out of Google's FLoC by removing the comment-out in [ssl.conf](./swag/swag_configs/nginx/ssl.conf) for that as well
+- (Optional) I've enabled HSTS by removing the comment-out in [ssl.conf](./swag/swag_configs/nginx/ssl.conf) and submited it for [preload](https://hstspreload.org/) afterwards. This ensures that all connections to the domain and subdomains are strictly HTTPS by hard-coding it every major browser. But if for some reason you lose HTTPS, the browser will refuse to load the site. I've also enabled opt out of Google's FLoC by removing the comment-out in [ssl.conf](./swag/swag_configs/nginx/ssl.conf) for that as well
+- (Optional) I've changed site-conf [default](./swag/swag_configs/nginx/site-confs/default) such that the website (www) is only accessible by URL and not IP address as most of the bots traffic were resolving by IP. You may copy the file and change the domain or go through the contents and change your copy accordingly.  
 - Restart the container with `sudo docker restart swag` for the changes to take effect
+
+**Instructions for fail2ban:**
+- TBD
 
 **To-Do:** 
 - [x] fail2ban for services
@@ -212,20 +215,11 @@ exit
 - Some configurations cannot be changed with the web-ui and have to be done by adding entries for memcache.distributed, filelocking.enabled, memcache.locking, redis, overwritehost, overwriteprotocol , default_language, default_locale, default_phone_region in [config.php](./nextcloud/nextcloud-config/www/nextcloud/config/config.php). DO NOT replace with the file I've uploaded as other entries are redacted, it is ONLY FOR REFERENCE
 - Restart nextcloud with `sudo docker restart nextcloud` and login as your user
 - Verify that there are no problems at https://nextcloud.domain/settings/admin/overview and https://nextcloud.domain/settings/admin/logging (there may be some log entries)
-- Apps can be added at https://nextcloud.domain/settings/apps. I've added [Contacts](https://apps.nextcloud.com/apps/contacts), [Calendar](https://apps.nextcloud.com/apps/calendar), [Notes](https://apps.nextcloud.com/apps/notes), [Task](https://apps.nextcloud.com/apps/tasks), [Talk](https://apps.nextcloud.com/apps/spreed), [Mail](https://apps.nextcloud.com/apps/mail), [Forms](https://apps.nextcloud.com/apps/forms), [Collabora Online](https://apps.nextcloud.com/apps/richdocuments), [External storage support], [Two-Factor TOTP Provider](https://apps.nextcloud.com/apps/twofactor_totp)
+- Apps can be added at https://nextcloud.domain/settings/apps. I've added [Contacts](https://apps.nextcloud.com/apps/contacts), [Calendar](https://apps.nextcloud.com/apps/calendar), [Notes](https://apps.nextcloud.com/apps/notes), [Task](https://apps.nextcloud.com/apps/tasks), [Talk](https://apps.nextcloud.com/apps/spreed), [Mail](https://apps.nextcloud.com/apps/mail), [Forms](https://apps.nextcloud.com/apps/forms), [Collabora Online](https://apps.nextcloud.com/apps/richdocuments), [External storage support], [Two-Factor TOTP Provider](https://apps.nextcloud.com/apps/twofactor_totp). Refer to the below section for how to setup collabora.
 - Settings, including that of the installed apps can accessed at https://nextcloud.domain/settings/user
 
-**Nextcloud Links:** [Docker Image Docs](https://docs.linuxserver.io/images/docker-nextcloud), [1st-party Docs](https://docs.nextcloud.com/server/latest/admin_manual/), [Client Download](https://nextcloud.com/install/#install-clients)
-
-**Mariadb Links:** [Docker Image Docs](https://docs.linuxserver.io/images/docker-mariadb), [1st-party Docs](https://mariadb.org/documentation/), [SQL Statements](https://mariadb.com/kb/en/sql-statements/), [Nextcloud DB-config Docs](https://docs.nextcloud.com/server/latest/admin_manual/configuration_database/linux_database_configuration.html), [Nextcloud 4-byte support](https://docs.nextcloud.com/server/latest/admin_manual/configuration_database/mysql_4byte_support.html)
-
-**Redis Links:** [Docker Image Docs](https://hub.docker.com/_/redis/), [1st-party Docs](https://redis.io/documentation), [Nextcloud Caching Docs](https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/caching_configuration.html), [Nextcloud Caching Docs](https://docs.nextcloud.com/server/latest/admin_manual/configuration_files/files_locking_transactional.html)
-
-#### [Collabora](https://collaboraoffice.com/code)
-Collabora is a self-hosted web-based office suite similar to Google Docs/Office Online. I'm using this as a seperate container because the nextcloud image I'm using doesn't support the one from app store. 
-
-**Instructions:**
-- Set the admin username and password in the [.env](./compose-files/collabora/.env) file  
+**Instructions for collabora:**
+- Set the admin username and password in the [.env](./compose-files/nextcloud/.env) file  
 - Start the container with `sudo docker-compose up -d`
 - Verify if collabora started by checking if you get 'OK' in https://collabora.domain/
 - Connect to it with nextcloud. This cannot be used STANDALONE (I was so confused by this)
@@ -234,12 +228,15 @@ Collabora is a self-hosted web-based office suite similar to Google Docs/Office 
     - In URL (and Port) of Collabora Online-server, put https://collabora.domain/ and save
     - Make sure you get a green tick mark it
     - Open any document in your nextcloud
-- Currently, the only way to use additional fonts (*cough* microsoft fonts *cough*) without building your own image is to mount as given in the compose file. This will break whenever the version number changes, but none of the other methods I've tried worked.
+- Currently, the only way to use additional fonts (*cough* microsoft fonts *cough*) without building your own image is to mount as given in the compose file. This is highly likely to break in future updates.
 
-**To-Do:** 
-- [ ] Merge with nextcloud stack
+**Nextcloud Links:** [Docker Image Docs](https://docs.linuxserver.io/images/docker-nextcloud), [1st-party Docs](https://docs.nextcloud.com/server/latest/admin_manual/), [Client Download](https://nextcloud.com/install/#install-clients)
 
-**Links:** [Docker Image Docs](https://sdk.collaboraonline.com/docs/installation/CODE_Docker_image.html), [Better 3rd-party Doc](https://project.dancier.net/documentation/howto/nextcloud/index.html), [Additional Fonts Forum post](https://help.nextcloud.com/t/collabora-font-issues/26126/4)
+**Mariadb Links:** [Docker Image Docs](https://docs.linuxserver.io/images/docker-mariadb), [1st-party Docs](https://mariadb.org/documentation/), [SQL Statements](https://mariadb.com/kb/en/sql-statements/), [Nextcloud DB-config Docs](https://docs.nextcloud.com/server/latest/admin_manual/configuration_database/linux_database_configuration.html), [Nextcloud 4-byte support](https://docs.nextcloud.com/server/latest/admin_manual/configuration_database/mysql_4byte_support.html)
+
+**Redis Links:** [Docker Image Docs](https://hub.docker.com/_/redis/), [1st-party Docs](https://redis.io/documentation), [Nextcloud Caching Docs](https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/caching_configuration.html), [Nextcloud Caching Docs](https://docs.nextcloud.com/server/latest/admin_manual/configuration_files/files_locking_transactional.html)
+
+**Collabora Links:** [Docker Image Docs](https://sdk.collaboraonline.com/docs/installation/CODE_Docker_image.html), [Better 3rd-party Doc](https://project.dancier.net/documentation/howto/nextcloud/index.html), [Additional Fonts Forum post](https://help.nextcloud.com/t/collabora-font-issues/26126/4)
 
 #### [Jellyfin](https://jellyfin.org/) 
 Jellyfin is a self-hosted media server similar to plex (also selfhosted but not fully open-source) and could be a replacement for streaming services like netflix/spotify for content that you *own*. Do note that the content that you pay for does not necessarily mean you *own* it due copyrights and terms, so use them with a media server at your own risk. Jellyfin also downloads metadata/images for your media and supports SyncPlay (watch together).
@@ -349,6 +346,14 @@ Transmission is a BitTorrent client for torrenting (i.e downloading and sharing 
 
 **Links:** [Docker Image Docs](https://docs.linuxserver.io/images/docker-transmission), [Arch Wiki Entry](https://wiki.archlinux.org/title/Transmission), [Android Remote App](https://github.com/equeim/tremotesf-android)
 
+#### [DIUN](https://crazymax.dev/diun/)
+DIUN is a update notifier for images of docker containers running on the system. 
+
+**Instructions:**
+- TBD
+
+**Links:** [Docker Image Docs](https://crazymax.dev/diun/usage/basic-example/)
+
 ---
 ## Meme
 <img src="meme.png" alt="meme" width="200"/>
@@ -358,6 +363,6 @@ Transmission is a BitTorrent client for torrenting (i.e downloading and sharing 
 - [ ] Finish writing README
 - [x] Sanitise compose files of sensitive information
 - [x] Upload docker-compose files
-- [ ] Upload config files
+- [x] Upload config files
 - [x] ~~Auto-update script~~ using diun
 - [x] Move data to new hard disk
