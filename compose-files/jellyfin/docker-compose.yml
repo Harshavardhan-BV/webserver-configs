@@ -13,6 +13,10 @@ services:
       - PUID=1001 #run the program as this user
       - PGID=1001 #group permissions for the program
       - TZ=Asia/Kolkata #timezone
+    devices: #attach devices in container
+      - /dev/video10:/dev/video10 #for V4L2 hardware acceleration
+      - /dev/video11:/dev/video11 #for V4L2 hardware acceleration
+      - /dev/video12:/dev/video12 #for V4L2 hardware acceleration
     volumes: #persistent storage [source_on_host:destination_in_container]
       - ./jellyfin-config:/config #configration files
       - /home/bv/media:/media #media folder (not read-only since jellyfin writes metadata)
