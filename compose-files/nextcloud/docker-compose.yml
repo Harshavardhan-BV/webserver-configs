@@ -61,7 +61,7 @@ services:
     env_file: #sensitive environment variables in file 
       - .env
     environment: #environment variables
-      - "aliasgroup1=https://nextcloud\\.beevee\\.ga:443" #only this (sub)domain can provide docs to collabora, "\\." mandatory for <dots>
+      - "aliasgroup1=https://nc\\.hbv\\.io\\.in:443" #only this (sub)domain can provide docs to collabora, "\\." mandatory for <dots>
       - "dictionaries=en_GB en_US" #only english spellcheck added
     volumes:
        - ./fonts:/opt/collaboraoffice/share/fonts/truetype/local #additional (ms) fonts

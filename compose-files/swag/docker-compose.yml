@@ -15,9 +15,11 @@ services:
       - PUID=1001 #run the program as this user
       - PGID=1001 #group permissions for the program
       - TZ=Asia/Kolkata #timezone
-      - VALIDATION=http #certbot validation type
+      - VALIDATION=dns #certbot validation type
+      - DNSPLUGIN=cloudflare #cloudflare is dns provider
+      - PROPAGATION=30 #wait 30s b4 checking dns challenge
       - ONLY_SUBDOMAINS=false #include base domain as well
-      - DOCKER_MODS=linuxserver/mods:swag-dashboard
+      - DOCKER_MODS=linuxserver/mods:swag-dashboard #add dashboard for monitoring swag
     volumes: #persistent storage [source_on_host:destination_in_container]
       - ./swag_config:/config #configration files
       - /home/bv/website:/config/www #html website for www.beevee.ga
