@@ -20,11 +20,10 @@ services:
       - DOCKER_MODS=linuxserver/mods:swag-dashboard|linuxserver/mods:swag-auto-reload #add dashboard for monitoring swag
     volumes: #persistent storage [source_on_host:destination_in_container]
       - ./swag_config:/config #configration files
-      - /home/bv/website:/config/www #html website for www.beevee.ga
-      - /home/bv/Downloads/complete/LLaMA:/config/www/LLaMA 
+      - ${HOME}/website:/config/www #html website for www.hbv.io.in
       - ../jellyfin/jellyfin-config/log:/f2b_log/jellyfin:ro #logs from jellyfin for fail2ban
       - ../vaultwarden/vw-data/vaultwarden.log:/f2b_log/vaultwarden/vaultwarden.log:ro #logs from vaultwarden for fail2ban
-      - /home/bv/data/nextcloud/nextcloud.log:/f2b_log/nextcloud/nextcloud.log:ro #logs from nextcloud for fail2ban
+      - ${HOME}/data/nextcloud/nextcloud.log:/f2b_log/nextcloud/nextcloud.log:ro #logs from nextcloud for fail2ban
     ports: #expose ports 
       - 443:443 #https
       - 80:80 #http for redirection and certbot

@@ -11,13 +11,11 @@ This repository is to serve as a documentation/tutorial/blog of how I set up a s
 
 ## Device
 ### Hardware
-Item | Cost | Needs Replacement?
----|---|---
-Raspberry Pi 4 Model B 8GB RAM | ₹ 6,799.00 | New
-Raspberry Pi 15.3W Type-C Power Supply | ₹ 708.00 | New
-Samsung EVO Plus 64GB microSDXC | ₹699.00 | New
-40mm brass canister | ₹0.00 | Yes
-WD My Book 4TB External Hard Drive | ₹6,999.00 | New
+- Raspberry Pi 4 Model B 8GB RAM 
+- Raspberry Pi 15.3W Type-C Power Supply 
+- Passive Heatsink Case
+- Samsung EVO Plus 64GB microSDXC 
+- WD My Book 4TB External Hard Drive
 
 [RaspberryPi](https://www.raspberrypi.org/) is a very small and cheap single-board computer that has pretty good performance for a low power device. I could've used some old laptop for this, but it would have loud fans, produce a lot of heat and would be difficult to hide. 
 
@@ -26,7 +24,7 @@ This RPi is enough for me as I don't expect more than 10 instances to be connect
 The SD card serves as the OS boot drive and the hard disk serves as the bulk storage. The SD card is honestly not required and at such high capacity as newer RPi bootloaders support USB boot and SD cards are said to have lower endurance. The internal hard-disk used in My Book is WDC WD40EDAZ-11U78B0. This appears to be a enterprise class drive but is SMR. For my usecase, since I won't be doing much writes nor using ZFS raid, it shouldn't be an issue. 
 
 ### Software
-#### [Ubuntu Server 20.04 LTS](https://ubuntu.com/download/raspberry-pi)
+#### [Ubuntu Server 22.04 LTS](https://ubuntu.com/download/raspberry-pi)
 The official Raspberry Pi OS only has a 32-bit stable release. ARM32 would have lower performance (on RPi4) and ARM64 is supported by more applications, so, I  wanted a 64 bit OS. I personally prefer Debian more as a server OS, however, Ubuntu is also not a bad OS. It is also officially supported by RPi. Although, I've uninstalled snaps by following this [guide](https://techwiser.com/remove-snap-ubuntu/) xD.
 
 Installing the OS is different from regular linux, where the filesystem is directly flashed to the microsd. I used the [rpi-imager](https://www.raspberrypi.org/software/) for this.
@@ -67,7 +65,10 @@ sudo docker exec -it <container_name> <command/bash>
 
 ---
 ## Domain
-TBD
+If you would like to try stuff out with a free domain, refer to [freenom](./freenom.md). I obtained my domain hbv.io.in from [godil](https://godil.in/).
+
+### DNS Configuration
+I use cloudflare for managing DNS. TBD
 
 ---
 ## Networking

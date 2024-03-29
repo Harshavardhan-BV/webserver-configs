@@ -14,10 +14,10 @@ services:
       - DOCKER_MODS=linuxserver/mods:transmission-floodui #using the flood ui, combustion is better for mobile centric
     volumes: #persistent storage [source_on_host:destination_in_container]
       - ./transmission-config:/config #configration files
-      - /home/bv/Downloads:/downloads #default location to download to
-      - /home/bv/OS_ISO:/OS_ISO #changed ISO download location
-      - /home/bv/media:/media #wtf does it do, idk :)
-      - /home/bv/torrent-watch:/watch #watch directory for torrent files to autodownload
+      - ${HOME}/Downloads:/downloads #default location to download to
+      - ${HOME}/OS_ISO:/OS_ISO #changed ISO download location
+      - ${HOME}/media:/media #wtf does it do, idk :)
+      - ${HOME}/torrent-watch:/watch #watch directory for torrent files to autodownload
     ports: #expose ports 
       - 51413:51413 #peer listen port
       - 51413:51413/udp #peer listen port

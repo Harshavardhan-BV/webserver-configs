@@ -31,7 +31,7 @@ services:
       PHOTOPRISM_DATABASE_SERVER: "pp_db:3306" #db servername:port
       PHOTOPRISM_DATABASE_USER: "pp" #mysqldb user
       PHOTOPRISM_DATABASE_NAME: "photoprism" #mysql database
-      PHOTOPRISM_SITE_URL: "https://photoprism.beevee.ga/" #(sub)domain url
+      PHOTOPRISM_SITE_URL: "https://pp.hbv.io.in/" #(sub)domain url
       PHOTOPRISM_SITE_TITLE: "PhotoPrism" #HTML <head> <title>
       PHOTOPRISM_SITE_CAPTION: "Browse Your Life" #HTML <head> <title>
       PHOTOPRISM_SITE_DESCRIPTION: "" #HTML <head> stuff (doesn't seem to do anything else)
@@ -39,10 +39,10 @@ services:
       HOME: "/photoprism" #Home folder
     working_dir: "/photoprism" #Home folder 
     volumes: #persistent storage [source_on_host:destination_in_container]
-      - "/home/bv/Pictures:/photoprism/originals" #original picture storage
+      - "${HOME}/Pictures:/photoprism/originals" #original picture storage
       - "./photoprism-storage:/photoprism/storage" #(metadata) storage
       - "./photoprism-data:/var/lib/photoprism" #data file? (creates a docker volume otherwise)
-      - "/home/bv/bogosbinted:/photoprism/import" #mount point to transfer pre-existing library from
+      - "${HOME}/bogosbinted:/photoprism/import" #mount point to transfer pre-existing library from
     depends_on: #needs these containers to be running first
       - mariadb
     restart: unless-stopped #automatically restart 
