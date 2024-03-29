@@ -1,5 +1,3 @@
-version: '3.5'
-
 services:
   photoprism:
     image: photoprism/photoprism:latest #base image

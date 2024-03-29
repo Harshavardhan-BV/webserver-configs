@@ -1,0 +1,36 @@
+services:
+  prometheus:
+    image: prom/prometheus #base image
+    container_name: prometheus  #name of container
+    hostname: prometheus #name of virtual pc on network
+    networks:
+      - db
+    volumes: #persistent storage [source_on_host:destination_in_container]
+      - "./prometheus-config:/etc/prometheus"
+    restart: unless-stopped #automatically restart 
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node_exporter
+    networks:
+      - db
+    command:
+      - '--path.rootfs=/host'
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+  grafana:
+    image: grafana/grafana-oss #base image
+    container_name: grafana #name of container
+    hostname: grafana #name of virtual pc on network
+    user: 1001:1001 
+    networks:
+      - webserver
+      - db
+    volumes:
+      - "./grafana-data:/var/lib/grafana"
+    restart: unless-stopped #automatically restart 
+
+networks: #define custom networks
+  webserver:
+    external: true #use predefined network
+  db: #create additional network only for database access

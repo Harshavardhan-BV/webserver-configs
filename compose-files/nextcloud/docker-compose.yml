@@ -1,5 +1,3 @@
-version: "2.1"
-
 services:
   mariadb: #mysql-like database
     image: lscr.io/linuxserver/mariadb #base image

@@ -1,5 +1,3 @@
-version: "2.1"
-
 services:
   jellyfin:
     image: lscr.io/linuxserver/jellyfin #base image

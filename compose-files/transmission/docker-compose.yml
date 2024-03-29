@@ -1,5 +1,3 @@
-version: "2.1"
-
 services:
   transmission:
     image: lscr.io/linuxserver/transmission #base image
@@ -13,7 +11,7 @@ services:
       - PUID=1001 #run the program as this user
       - PGID=1001 #group permissions for the program
       - TZ=Asia/Kolkata #timezone
-      - TRANSMISSION_WEB_HOME=/flood-for-transmission/ #using the flood ui, combustion is better for mobile centric
+      - DOCKER_MODS=linuxserver/mods:transmission-floodui #using the flood ui, combustion is better for mobile centric
     volumes: #persistent storage [source_on_host:destination_in_container]
       - ./transmission-config:/config #configration files
       - /home/bv/Downloads:/downloads #default location to download to
